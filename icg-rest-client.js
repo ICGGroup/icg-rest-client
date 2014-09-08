@@ -11,7 +11,9 @@
   module.exports = function(apiBaseUrl, secToken) {
     var buildOptions, client, endsWith, getUrl, httpCall;
     endsWith = function(val, suffix) {
-      return val.indexOf(suffix, val.length - suffix.length) !== -1;
+      if (val && suffix) {
+        return val.indexOf(suffix, val.length - suffix.length) !== -1;
+      }
     };
     getUrl = function(path) {
       if (endsWith(apiBaseUrl, "/")) {
@@ -36,7 +38,7 @@
           return buffers.push(chunk);
         });
         return res.on("end", function() {
-          var e, response;
+          var e, err, response;
           response = {
             statusCode: res.statusCode,
             headers: headers,
@@ -44,13 +46,14 @@
           };
           if (res.statusCode >= 200 && res.statusCode <= 205) {
             if (parse) {
+              err = null;
               try {
-                response.body = JSON.parse(response.body.toString());
-                return callback(null, response);
+                return response.body = JSON.parse(response.body.toString());
               } catch (_error) {
                 e = _error;
-                response.body = response.body.toString();
-                return callback(response);
+                return err = response.body.toString();
+              } finally {
+                callback(err, response);
               }
             } else {
               response.body = response.body.toString();
